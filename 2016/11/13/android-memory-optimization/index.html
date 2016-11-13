@@ -1,0 +1,337 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  
+    <title>Android性能优化——内存优化 | 心中要有一片海</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="Kevin Xie">
+    
+    <meta name="description" content="&amp;#x5185;&amp;#x5B58;&amp;#x5206;&amp;#x6790;&amp;#x7531;&amp;#x4E8E;&amp;#x6709;&amp;#x4E9B;&amp;#x56FE;&amp;#x7247;&amp;#x622A;&amp;#x53D6;&amp;#x7684;&amp;#x533A;&amp;#x57DF;&amp;#x8F83;&amp;#x5927;&amp;#xFF0C;&amp;#x53E">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="心中要有一片海" title="心中要有一片海"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="心中要有一片海">心中要有一片海</a></h1>
+				<h2 class="blog-motto"></h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+					<li>
+					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="q" autocomplete="off" maxlength="20" placeholder="Search" />
+						<input type="hidden" name="q" value="site:yoursite.com">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/11/13/android-memory-optimization/" title="Android性能优化——内存优化" itemprop="url">Android性能优化——内存优化</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://yoursite.com" title="Kevin Xie">Kevin Xie</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2016-11-13T02:26:28.000Z" itemprop="datePublished">2016-11-13</time>
+    Updated:<time datetime="2016-11-13T08:34:53.000Z" itemprop="dateModified">2016-11-13</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#内存分析"><span class="toc-number">1.</span> <span class="toc-text">内存分析</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#序"><span class="toc-number">1.1.</span> <span class="toc-text">序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#分析所使用的工具"><span class="toc-number">1.2.</span> <span class="toc-text">分析所使用的工具</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用Memory工具分析频繁GC"><span class="toc-number">1.3.</span> <span class="toc-text">使用Memory工具分析频繁GC</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#开始分析"><span class="toc-number">1.3.1.</span> <span class="toc-text">开始分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-选择要监视的线程"><span class="toc-number">1.3.1.1.</span> <span class="toc-text">1. 选择要监视的线程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-获取内存分配监视报告"><span class="toc-number">1.3.1.2.</span> <span class="toc-text">2. 获取内存分配监视报告</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-分析监视结果文件"><span class="toc-number">1.3.1.3.</span> <span class="toc-text">3. 分析监视结果文件</span></a></li></ol></li></ol></li></ol></li></ol>
+		</div>
+		
+		<h1 id="&#x5185;&#x5B58;&#x5206;&#x6790;"><a href="#&#x5185;&#x5B58;&#x5206;&#x6790;" class="headerlink" title="&#x5185;&#x5B58;&#x5206;&#x6790;"></a>&#x5185;&#x5B58;&#x5206;&#x6790;</h1><font color="FF0000" size="5">&#x7531;&#x4E8E;&#x6709;&#x4E9B;&#x56FE;&#x7247;&#x622A;&#x53D6;&#x7684;&#x533A;&#x57DF;&#x8F83;&#x5927;&#xFF0C;&#x53EF;&#x80FD;&#x770B;&#x4E0D;&#x6E05;&#x695A;&#x4E0A;&#x9762;&#x7684;&#x5B57;&#x3002;&#x53EF;&#x4EE5;&#x653E;&#x5927;&#x67E5;&#x770B;&#xFF0C;Chrome&#x6D4F;&#x89C8;&#x5668;&#x4F7F;&#x7528;&#x9F20;&#x6807;&#x6EDA;&#x8F6E;+ctrl&#x3002;</font>
+
+<h2 id="&#x5E8F;"><a href="#&#x5E8F;" class="headerlink" title="&#x5E8F;"></a>&#x5E8F;</h2><p>&#x4EC0;&#x4E48;&#x65F6;&#x5019;&#x9700;&#x8981;&#x8981;&#x8FDB;&#x884C;&#x5185;&#x5B58;&#x5206;&#x6790;&#xFF1F;<br>&#x76EE;&#x524D;&#x770B;&#x6765;&#x5F53;&#x51FA;&#x73B0;&#x4E0B;&#x9762;&#x4E24;&#x79CD;&#x60C5;&#x51B5;&#x65F6;&#xFF0C;&#x5C31;&#x9700;&#x8981;&#x5BF9;&#x5185;&#x5B58;&#x8FDB;&#x884C;&#x5206;&#x6790;&#x3002;&#x56E0;&#x4E3A;&#x8FD9;&#x4E24;&#x79CD;&#x60C5;&#x51B5;&#x90FD;&#x662F;&#x5185;&#x5B58;&#x9020;&#x6210;&#x7684;&#x3002;</p>
+<p>&#x60C5;&#x51B5;&#x4E00;&#xFF1A;&#x9891;&#x7E41;GC&#x5BFC;&#x81F4;UI&#x7EBF;&#x7A0B;&#x5361;&#x987F;</p>
+<p>&#x5982;&#x679C;&#x7A0B;&#x5E8F;&#x51FA;&#x73B0;&#x5927;&#x91CF;&#x7684;&#x5185;&#x5B58;&#x5206;&#x914D;&#x548C;&#x91CA;&#x653E;&#xFF0C;&#x5C31;&#x610F;&#x5473;&#x7740;&#x4EA7;&#x751F;&#x4E86;&#x9891;&#x7E41;&#x7684;GC&#x3002;&#x5F53;GC&#x7EBF;&#x7A0B;&#x8FD0;&#x884C;&#x65F6;&#xFF0C;&#x5176;&#x4ED6;&#x7EBF;&#x7A0B;&#x4F1A;&#x505C;&#x6B62;&#x5DE5;&#x4F5C;&#xFF08;&#x5305;&#x62EC;UI&#x7EBF;&#x7A0B;&#xFF09;&#xFF0C;&#x76F4;&#x5230;GC&#x5B8C;&#x6210;&#x3002;&#x6240;&#x4EE5;&#x9891;&#x7E41;&#x7684;GC&#xFF0C;&#x5FC5;&#x7136;&#x4F1A;&#x5BFC;&#x81F4;UI&#x7EBF;&#x7A0B;&#x7684;&#x5361;&#x987F;&#x3002;&#x7279;&#x522B;&#x662F;&#x6027;&#x80FD;&#x6BD4;&#x8F83;&#x5DEE;&#x7684;&#x624B;&#x673A;&#x4E0A;&#xFF0C;&#x5C24;&#x4E3A;&#x660E;&#x663E;&#x3002; <img src="/2016/11/13/android-memory-optimization/QQ&#x622A;&#x56FE;20160919160146.png" alt="hello"></p>
+<p>&#x60C5;&#x51B5;&#x4E8C;&#xFF1A;&#x5185;&#x5B58;&#x6CC4;&#x6F0F;</p>
+<p>&#x5982;&#x679C;&#x7A0B;&#x5E8F;&#x51FA;&#x73B0;&#x5927;&#x91CF;&#x7684;&#x5185;&#x5B58;&#x5206;&#x914D;&#xFF0C;&#x8FD9;&#x65F6;&#x5019;GC&#x5374;&#x65E0;&#x6CD5;&#x56DE;&#x6536;(&#x4E00;&#x822C;&#x90FD;&#x662F;&#x56E0;&#x4E3A;&#x6709;&#x5F3A;&#x5F15;&#x7528;&#x5728;&#x5F15;&#x7528;&#x8BE5;&#x5BF9;&#x8C61;&#xFF0C;&#x5BFC;&#x81F4;GC&#x65E0;&#x6CD5;&#x91CA;&#x653E;&#x6539;&#x5BF9;&#x8C61;&#x6240;&#x5360;&#x7528;&#x7684;&#x5185;&#x5B58;&#x3002;&#x8FD9;&#x5C31;&#x662F;&#x6240;&#x8C13;&#x7684;&#x5185;&#x5B58;&#x6CC4;&#x6F0F;&#xFF09;&#xFF0C;&#x90A3;&#x5C31;&#x4F1A;&#x5BFC;&#x81F4;&#x7A0B;&#x5E8F;&#x6700;&#x7EC8;&#x56E0;&#x4E3A;&#x5185;&#x5B58;&#x67AF;&#x7AED;&#x800C;&#x5D29;&#x6E83;&#x3002;&#x5728;&#x7A0B;&#x5E8F;&#x4E0A;&#x7684;&#x8868;&#x73B0;&#xFF0C;&#x5C31;&#x662F;&#x629B;&#x51FA;OutOfMemory&#x5F02;&#x5E38;&#x3002;</p>
+<font color="FF0000" size="5">&#x5F53;&#x51FA;&#x73B0;&#x4E0A;&#x9762;&#x4E24;&#x79CD;&#x60C5;&#x51B5;&#x7684;&#x65F6;&#x5019;&#x5C31;&#x9700;&#x8981;&#x5BF9;&#x5185;&#x5B58;&#x8FDB;&#x884C;&#x5206;&#x6790;&#x4E86;&#xFF0C;&#x627E;&#x51FA;&#x95EE;&#x9898;&#x4EE3;&#x7801;&#xFF0C;&#x89E3;&#x51B3;&#x4E4B;&#xFF01;</font>
+
+<h2 id="&#x5206;&#x6790;&#x6240;&#x4F7F;&#x7528;&#x7684;&#x5DE5;&#x5177;"><a href="#&#x5206;&#x6790;&#x6240;&#x4F7F;&#x7528;&#x7684;&#x5DE5;&#x5177;" class="headerlink" title="&#x5206;&#x6790;&#x6240;&#x4F7F;&#x7528;&#x7684;&#x5DE5;&#x5177;"></a>&#x5206;&#x6790;&#x6240;&#x4F7F;&#x7528;&#x7684;&#x5DE5;&#x5177;</h2><p>&#x8981;&#x5206;&#x6790;&#x80AF;&#x5B9A;&#x5C31;&#x79BB;&#x4E0D;&#x5F00;&#x5DE5;&#x5177;&#x7684;&#x4F7F;&#x7528;&#x3002;&#x4E0D;&#x8FC7;Google&#x5DF2;&#x7ECF;&#x4E3A;&#x6211;&#x4EEC;&#x51C6;&#x5907;&#x597D;&#x4E86;&#x76F8;&#x5E94;&#x7684;&#x5206;&#x6790;&#x5DE5;&#x5177;&#x3002;</p>
+<p>&#x901A;&#x8FC7;AndroidStudio&#x81EA;&#x5E26;&#x7684;Monitors&#x5DE5;&#x5177;&#x96C6;&#x4E2D;&#x7684;Memory&#x5DE5;&#x5177;&#x6765;&#x5206;&#x6790;&#x3002; <img src="/2016/11/13/android-memory-optimization/QQ&#x622A;&#x56FE;20160919105544.png" alt="Memory"></p>
+<h2 id="&#x4F7F;&#x7528;Memory&#x5DE5;&#x5177;&#x5206;&#x6790;&#x9891;&#x7E41;GC"><a href="#&#x4F7F;&#x7528;Memory&#x5DE5;&#x5177;&#x5206;&#x6790;&#x9891;&#x7E41;GC" class="headerlink" title="&#x4F7F;&#x7528;Memory&#x5DE5;&#x5177;&#x5206;&#x6790;&#x9891;&#x7E41;GC"></a>&#x4F7F;&#x7528;Memory&#x5DE5;&#x5177;&#x5206;&#x6790;&#x9891;&#x7E41;GC</h2><p>&#x9891;&#x7E41;GC&#x5728;Memory&#x76D1;&#x89C6;&#x5DE5;&#x5177;&#x4E2D;&#x7684;&#x8868;&#x73B0;&#x662F;&#x51FA;&#x73B0;&#x4E86;&#x5927;&#x91CF;&#x952F;&#x9F7F;&#x72B6;&#x5185;&#x5B58;&#x6CE2;&#x52A8;&#x3002;&#x5982;&#x4E0B;&#x56FE;&#x6240;&#x793A;<br><img src="/2016/11/13/android-memory-optimization/QQ&#x622A;&#x56FE;20160919160146.png" alt=""></p>
+<h3 id="&#x5F00;&#x59CB;&#x5206;&#x6790;"><a href="#&#x5F00;&#x59CB;&#x5206;&#x6790;" class="headerlink" title="&#x5F00;&#x59CB;&#x5206;&#x6790;"></a>&#x5F00;&#x59CB;&#x5206;&#x6790;</h3><h4 id="1-&#x9009;&#x62E9;&#x8981;&#x76D1;&#x89C6;&#x7684;&#x7EBF;&#x7A0B;"><a href="#1-&#x9009;&#x62E9;&#x8981;&#x76D1;&#x89C6;&#x7684;&#x7EBF;&#x7A0B;" class="headerlink" title="1. &#x9009;&#x62E9;&#x8981;&#x76D1;&#x89C6;&#x7684;&#x7EBF;&#x7A0B;"></a>1. &#x9009;&#x62E9;&#x8981;&#x76D1;&#x89C6;&#x7684;&#x7EBF;&#x7A0B;</h4><p><img src="/2016/11/13/android-memory-optimization/QQ&#x622A;&#x56FE;20160919172524.png" alt="&#x9009;&#x62E9;&#x8FDB;&#x7A0B;"></p>
+<h4 id="2-&#x83B7;&#x53D6;&#x5185;&#x5B58;&#x5206;&#x914D;&#x76D1;&#x89C6;&#x62A5;&#x544A;"><a href="#2-&#x83B7;&#x53D6;&#x5185;&#x5B58;&#x5206;&#x914D;&#x76D1;&#x89C6;&#x62A5;&#x544A;" class="headerlink" title="2. &#x83B7;&#x53D6;&#x5185;&#x5B58;&#x5206;&#x914D;&#x76D1;&#x89C6;&#x62A5;&#x544A;"></a>2. &#x83B7;&#x53D6;&#x5185;&#x5B58;&#x5206;&#x914D;&#x76D1;&#x89C6;&#x62A5;&#x544A;</h4><p><img src="/2016/11/13/android-memory-optimization/QQ&#x622A;&#x56FE;20160919173133.png" alt="&#x529F;&#x80FD;"></p>
+<ol>
+<li><p>&#x624B;&#x52A8;&#x89E6;&#x53D1;GC<img src="/2016/11/13/android-memory-optimization/QQ&#x622A;&#x56FE;20160919173421.png" alt="GC"></p>
+</li>
+<li><p>&#x70B9;&#x51FB;&#x76D1;&#x89C6;&#x6309;&#x94AE;<img src="/2016/11/13/android-memory-optimization/QQ&#x622A;&#x56FE;20160919173345.png" alt="&#x68C0;&#x6D4B;&#x6309;&#x94AE;">&#xFF0C;&#x5F00;&#x59CB;&#x76D1;&#x89C6;&#xFF0C;&#x6309;&#x94AE;&#x72B6;&#x6001;&#x53D8;&#x4E3A;<img src="/2016/11/13/android-memory-optimization/QQ&#x622A;&#x56FE;20160919173923.png" alt="">&#xFF0C;&#x518D;&#x6B21;&#x70B9;&#x51FB;&#x540E;&#x7ED3;&#x675F;&#x76D1;&#x89C6;<img src="/2016/11/13/android-memory-optimization/QQ&#x622A;&#x56FE;20160919161032.png" alt="&#x76D1;&#x89C6;"></p>
+</li>
+<li><p>&#x7ED3;&#x675F;&#x76D1;&#x89C6;&#x540E;&#x4F1A;&#x5F97;&#x5230;&#x7ED3;&#x679C;&#x6587;&#x4EF6;<img src="/2016/11/13/android-memory-optimization/QQ&#x622A;&#x56FE;20160919161329.png" alt=""></p>
+</li>
+</ol>
+<h4 id="3-&#x5206;&#x6790;&#x76D1;&#x89C6;&#x7ED3;&#x679C;&#x6587;&#x4EF6;"><a href="#3-&#x5206;&#x6790;&#x76D1;&#x89C6;&#x7ED3;&#x679C;&#x6587;&#x4EF6;" class="headerlink" title="3. &#x5206;&#x6790;&#x76D1;&#x89C6;&#x7ED3;&#x679C;&#x6587;&#x4EF6;"></a>3. &#x5206;&#x6790;&#x76D1;&#x89C6;&#x7ED3;&#x679C;&#x6587;&#x4EF6;</h4><p>&#x5206;&#x6790;&#x8FC7;&#x7A0B;&#x5DF2;&#x7ECF;&#x6807;&#x6CE8;&#x5728;&#x56FE;&#x7247;&#x4E0A;&#x4E86;&#xFF0C;&#x4E5F;&#x5C31;&#x662F;&#x56FE;&#x7247;&#x4E0A;&#x7684;&#x7EA2;&#x5B57;</p>
+<p>&#x6392;&#x5E8F;</p>
+<p><img src="/2016/11/13/android-memory-optimization/QQ&#x622A;&#x56FE;20160919161637.png" alt="&#x6392;&#x5E8F;"></p>
+<p>&#x5C55;&#x5F00;</p>
+<p><img src="/2016/11/13/android-memory-optimization/QQ&#x622A;&#x56FE;20160919162026.png" alt="&#x5C55;&#x5F00;"></p>
+<p>&#x8DF3;&#x8F6C;&#x5230;&#x76F8;&#x5E94;&#x6E90;&#x7801;</p>
+<p><img src="/2016/11/13/android-memory-optimization/QQ&#x622A;&#x56FE;20160919162118.png" alt=""></p>
+<p>&#x627E;&#x5230;&#x76F8;&#x5E94;&#x4EE3;&#x7801;&#xFF0C;&#x5E76;&#x89E3;&#x51B3;&#x3002;&#xFF08;&#x8FD9;&#x91CC;&#x53EA;&#x662F;&#x4E3A;&#x4E86;&#x663E;&#x793A;&#x80CC;&#x666F;&#x8272;&#xFF0C;&#x5374;&#x901A;&#x8FC7;&#x751F;&#x6210;&#x4E00;&#x4E2A;Bitmap&#x6765;&#x5B9E;&#x73B0;&#x3002;&#x5927;&#x53EF;&#x4E0D;&#x5FC5;&#x8FD9;&#x6837;&#xFF0C;&#x76F4;&#x63A5;new&#x4E00;&#x4E2A;ColorDrawable&#x5C31;&#x597D;&#x4E86;&#x3002;&#xFF09;&#x901A;&#x8FC7;&#x4FEE;&#x6539;&#x6210;ColorDrawable&#x540E;&#xFF0C;&#x6296;&#x52A8;&#x7684;&#x95EE;&#x9898;&#x5C31;&#x89E3;&#x51B3;&#x4E86;&#x3002;&#x754C;&#x9762;&#x6D41;&#x7545;&#x4E86;&#x5F88;&#x591A;&#x3002;</p>
+<p><img src="/2016/11/13/android-memory-optimization/QQ&#x622A;&#x56FE;20160919165522.png" alt=""></p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/优化/">优化</a>
+  </div>
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Android/">Android</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://yoursite.com/2016/11/13/android-memory-optimization/" data-title="Android性能优化——内存优化 | 心中要有一片海" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/11/13/hello-world/" title="Hello World">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  Hello World</span>
+</a>
+</div>
+
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#内存分析"><span class="toc-number">1.</span> <span class="toc-text">内存分析</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#序"><span class="toc-number">1.1.</span> <span class="toc-text">序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#分析所使用的工具"><span class="toc-number">1.2.</span> <span class="toc-text">分析所使用的工具</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用Memory工具分析频繁GC"><span class="toc-number">1.3.</span> <span class="toc-text">使用Memory工具分析频繁GC</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#开始分析"><span class="toc-number">1.3.1.</span> <span class="toc-text">开始分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-选择要监视的线程"><span class="toc-number">1.3.1.1.</span> <span class="toc-text">1. 选择要监视的线程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-获取内存分配监视报告"><span class="toc-number">1.3.1.2.</span> <span class="toc-text">2. 获取内存分配监视报告</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-分析监视结果文件"><span class="toc-number">1.3.1.3.</span> <span class="toc-text">3. 分析监视结果文件</span></a></li></ol></li></ol></li></ol></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">Categories</p>
+		<ul>
+		
+			<li><a href="/categories/Android/" title="Android">Android<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">Tags</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/优化/" title="优化">优化<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="rsspart">
+	<a href="null" target="_blank" title="rss">RSS</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<div class="social-font clearfix">
+		
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2016 
+		
+		<a href="http://yoursite.com" target="_blank" title="Kevin Xie">Kevin Xie</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+  </body>
+</html>
